@@ -1,6 +1,6 @@
 {
-  "dataloc": "/opt/faultmap_data",
-  "configloc": "/opt/faultmap_configs", 
-  "saveloc": "/opt/faultmap_results",
-  "infodynamicsloc": "/repos/faultmap/infodynamics.jar"
+  "data_loc": "/opt/faultmap_data",
+  "config_loc": "/opt/faultmap_configs",
+  "save_loc": "/opt/faultmap_results",
+  "infodynamics_loc": "/repos/faultmap/infodynamics.jar"
 }

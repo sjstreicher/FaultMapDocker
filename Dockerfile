@@ -1,36 +1,50 @@
-# FaultMap
+# FaultMap Docker Image
 #
-# VERSION 0.2
+# VERSION 1.0
 
-FROM ubuntu:16.04
-MAINTAINER Simon Streicher <streichersj@gmail.com>
+FROM python:3.12-slim
 
-# Install system level dependencies
-RUN apt-get update && apt-get install -y \
+LABEL maintainer="Simon Streicher <streichersj@gmail.com>"
+LABEL version="1.0"
+LABEL description="Docker image for the FaultMap fault analysis library"
+
+# Install system dependencies
+#   - pkg-config, gcc, g++, gfortran: build tools for compiled extensions
+#   - git: clone FaultMap repository
+#   - default-jdk-headless: Java runtime for JIDT (information dynamics)
+#   - ghostscript, dvipng, texlive-latex-extra: LaTeX rendering for plots
+#   - libhdf5-dev: HDF5 support for PyTables
+#   - libopenblas-dev, liblapack-dev: optimised linear algebra
+#   - libfreetype6-dev: font rendering for matplotlib
+RUN apt-get update && apt-get install -y --no-install-recommends \
     pkg-config \
-    ghostscript dvipng \    
-    python python-dev python-pip cython\
-    git default-jdk wget \
-    libfreetype6-dev libxft-dev libpng-dev libxext-dev \
-    gfortran libopenblas-dev liblapack-dev \
-    libhdf5-dev texlive-latex-extra
+    gcc g++ gfortran \
+    git \
+    default-jdk-headless \
+    ghostscript dvipng \
+    libhdf5-dev \
+    libopenblas-dev liblapack-dev \
+    libfreetype6-dev \
+    texlive-latex-extra \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install Miniconda
-RUN echo 'export PATH=/opt/conda/bin:$PATH' > /etc/profile.d/conda.sh && \
-    wget --quiet https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh && \
-    /bin/bash ~/miniconda.sh -b -p /opt/conda && \
-    rm ~/miniconda.sh
+# Set JAVA_HOME for JPype1 / JIDT
+ENV JAVA_HOME=/usr/lib/jvm/default-java
+ENV PATH="${JAVA_HOME}/bin:${PATH}"
 
-# Clone FaultMap repository and create environment
-RUN cd ~ && git clone https://github.com/SimonStreicher/FaultMap.git && \
-    cd FaultMap && \
-    export PATH=/opt/conda/bin:$PATH && \
-    conda env create -f environment.yml
+# Install uv package manager
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
 
-ENV PATH /opt/conda/bin:$PATH
+# Clone FaultMap repository
+WORKDIR /repos
+RUN git clone https://github.com/sjstreicher/FaultMap.git faultmap
 
-# Use ENV to add files to PATH
-#ENV PATH /usr/local/...:$PATH
+# Install FaultMap and all dependencies via uv
+WORKDIR /repos/faultmap
+RUN uv sync
+
+# Create data directories for volume mounting
+RUN mkdir -p /opt/faultmap_data /opt/faultmap_configs /opt/faultmap_results
 
 # Default command
-CMD /bin/bash
+CMD ["/bin/bash"]

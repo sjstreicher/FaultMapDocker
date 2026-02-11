@@ -1,5 +1,0 @@
-docker run -t -i -v ~/Dropbox/faultmap:/opt/ simonstreicher/faultmap /bin/bash
-cp /opt/faultmap_configs/config.json /repos/faultmap
-cd /repos/faultmap/
-python run_weightcalc.py
-
